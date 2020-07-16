@@ -1,0 +1,23 @@
+{
+    "name": "wuxuefeng/city-service",
+    "description": "小程序同城配送服务",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+    {
+        "name": "wuxuefeng",
+        "email": "984818992@qq.com"
+    }],
+    "require":
+    {
+        "luweiss/wechat": "^0.1.5",
+        "guzzlehttp/guzzle": "6.5.5"
+    },
+    "autoload":
+    {
+        "psr-4":
+        {
+            "CityService\\": "src"
+        }
+    }
+}
