@@ -10,8 +10,7 @@
     }],
     "require":
     {
-        "luweiss/wechat": "^0.1.5",
-        "guzzlehttp/guzzle": "~6.0"
+        "luweiss/wechat": "^0.1.5"
     },
     "autoload":
     {
