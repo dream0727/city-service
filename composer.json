@@ -1,11 +1,11 @@
 {
-    "name": "wuxuefeng/city-service",
+    "name": "dreamWu2020/city-service",
     "description": "小程序同城配送服务",
     "type": "library",
     "license": "MIT",
     "authors": [
     {
-        "name": "wuxuefeng",
+        "name": "dreamWu2020",
         "email": "984818992@qq.com"
     }],
     "require":
