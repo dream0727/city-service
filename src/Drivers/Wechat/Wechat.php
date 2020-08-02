@@ -14,11 +14,6 @@ class Wechat extends AbstractCityService implements CityServiceInterface
 {
     const BASE_URI = 'https://api.weixin.qq.com/cgi-bin/express/local/business';
 
-    public function __construct($config = [])
-    {
-        $this->config = $config;
-    }
-
     /**
      * 获取已支持的配送公司列表
      *
