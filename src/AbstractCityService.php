@@ -12,6 +12,11 @@ abstract class AbstractCityService
      */
     protected $config = [];
 
+    public function __construct(array $config = [])
+    {
+        $this->config = $config;
+    }
+
     /**
      * get config
      *
