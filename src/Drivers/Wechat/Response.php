@@ -18,7 +18,7 @@ class Response implements ResponseInterface
 
     public function getCode()
     {
-        return $this->data['resultcode'] ?? $this->data['errorcode'];
+        return $this->data['resultcode'] ?? $this->data['errcode'];
     }
 
     public function getData(){
@@ -30,7 +30,7 @@ class Response implements ResponseInterface
     }
 
     public function getMessage():?string {
-        return $this->data['resultmsg'] ?? $this->data['errormsg'];
+        return $this->data['resultmsg'] ?? $this->data['errmsg'];
     }
 
     public function __toString()
