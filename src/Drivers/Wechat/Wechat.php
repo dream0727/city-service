@@ -209,7 +209,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws \CityService\Exceptions\CityServiceException
      */
     private function getParams(array $data = []) {
-        if(! isset($data['shop_order_id'])) {
+        if(!isset($data['shop_order_id'])) {
             throw new CityServiceException('The shop_order_id field is required.');
         }
 

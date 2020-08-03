@@ -18,11 +18,11 @@ class Response implements ResponseInterface
 
     public function getCode()
     {
-        return $this->data['resultcode'] ?? null;
+        return $this->data['resultcode'] ?? $this->data['errorcode'];
     }
 
     public function getData(){
-        return $this->data['list'] ?? [];
+        return $this->data ?? [];
     }
 
     public function isSuccessful():bool {
@@ -30,7 +30,7 @@ class Response implements ResponseInterface
     }
 
     public function getMessage():?string {
-        return $this->data['resultmsg'] ?? null;
+        return $this->data['resultmsg'] ?? $this->data['errormsg'];
     }
 
     public function __toString()
