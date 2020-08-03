@@ -194,7 +194,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
                 'query' => [
                     'access_token' => $this->getAccessToken()
                 ],
-                'json'  => $data
+                'body'  => json_encode($data, JSON_UNESCAPED_UNICODE)
             ])->getBody();
             return new Response(json_decode((string)$body, true));
         } catch (GuzzleException $e) {
@@ -216,7 +216,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
         return array_merge($data, [
             'shopid'        => $this->getConfig('shopId'),
             'delivery_id'   => $this->getConfig('deliveryId'),
-            'delivery_sign' => SHA1($this->getConfig('shopId') . $data['shop_order_id'] . $this->getConfig('appSecret'))
+            'delivery_sign' => SHA1($this->getConfig('shopId') . $data['shop_order_id'] . $this->getConfig('deliveryAppSecret'))
         ]);
     }
 

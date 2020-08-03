@@ -9,6 +9,7 @@ return [
 
            'deliveryId' => '',
            'shopId' => '',
+           'deliveryAppSecret' => 'delivery app secret'
         ],
     ]
 ];
