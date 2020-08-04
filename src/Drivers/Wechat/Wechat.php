@@ -4,6 +4,9 @@ namespace CityService\Drivers\Wechat;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
+use CityService\Drivers\Wechat\Requests\PreAddOrderRequest;
+use CityService\Drivers\Wechat\Responses\AllImmeDeliveryResponse;
+use CityService\Drivers\Wechat\Responses\PreAddOrderResponse;
 use CityService\Exceptions\CityServiceException;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
@@ -25,7 +28,9 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function getAllImmeDelivery(): ResponseInterface
     {
         $path = '/delivery/getall';
-        return $this->post($path);
+        $response = $this->post($path);
+
+        return new AllImmeDeliveryResponse($response);
     }
 
     /**
@@ -43,7 +48,10 @@ class Wechat extends AbstractCityService implements CityServiceInterface
         $path = '/order/pre_add';
         $params = $this->getParams($data);
 
-        return $this->post($path, $params);
+        $params = (new PreAddOrderRequest($params))->build();
+        $response = $this->post($path, $params);
+
+        return new PreAddOrderResponse($response);
     }
 
     /**
@@ -178,12 +186,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @param       $path
      * @param array $data
      *
-     * @return ResponseInterface
+     * @return array
      * @throws CityServiceException
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    private function post($path, array $data = []): ResponseInterface
+    private function post($path, array $data = []): array
     {
         try {
             $client = new Client([
@@ -196,7 +204,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
                 ],
                 'json'  => $data
             ])->getBody();
-            return new Response(json_decode((string)$body, true));
+            return json_decode((string)$body, true) ?? [];
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }
@@ -232,9 +240,15 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      */
     private function getAccessToken($refresh = false)
     {
-        return (new \luweiss\Wechat\Wechat([
-            'appId'     => $this->getConfig('appId'),
-            'appSecret' => $this->getConfig('appSecret'),
-        ]))->getAccessToken($refresh);
+        try {
+            return (new \luweiss\Wechat\Wechat([
+                'appId'     => $this->getConfig('appId'),
+                'appSecret' => $this->getConfig('appSecret'),
+            ]))->getAccessToken($refresh);
+        }
+        catch (\luweiss\Wechat\WechatException $e)
+        {
+            throw new CityServiceException($e->getMessage());
+        }
     }
 }
