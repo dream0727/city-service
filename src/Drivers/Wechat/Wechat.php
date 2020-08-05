@@ -174,6 +174,24 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     }
 
     /**
+     * 拉取配送单信息
+     *
+     * @param array $data
+     *
+     * @return ResponseInterface
+     * @throws CityServiceException
+     * @throws HttpException
+     * @throws \luweiss\Wechat\WechatException
+     */
+    public function mockUpdateOrder(array $data = []):ResponseInterface
+    {
+        $params = $this->getParams($data);
+        $path = '/test_update_order';
+
+        return $this->post($path, $params);
+    }
+
+    /**
      * http post method
      * @param       $path
      * @param array $data
