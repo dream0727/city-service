@@ -7,15 +7,11 @@ use CityService\CityServiceInterface;
 use CityService\Drivers\Dada\Api\AddOrderApi;
 use CityService\Drivers\Dada\Api\CityCodeApi;
 use CityService\Drivers\Dada\Api\DeliverFeeApi;
-use CityService\Drivers\Dada\Api\PreAddOrderApi;
 use CityService\Drivers\Dada\Client\DadaRequestClient;
 use CityService\Drivers\Dada\Config\Config;
 use CityService\Drivers\Dada\Exceptions\DadaException;
 use CityService\Drivers\Dada\Model\DeliverFeeModel;
 use CityService\Drivers\Dada\Model\OrderModel;
-use CityService\Drivers\Dada\Model\PreAddOrderModel;
-use CityService\Exceptions\CityServiceException;
-use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
 
 class Dada extends AbstractCityService implements CityServiceInterface
@@ -71,7 +67,7 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $orderModel->setOriginId($data['shop_order_id']); // 第三方订单号
         $orderModel->setCityCode($this->getCityCode($data['city_name']));
         $orderModel->setCargoPrice($data['cargo']['goods_value']);
-        $orderModel->setIsPrepay($data['is_prepay']);
+        $orderModel->setIsPrepay(isset($data['is_prepay']) && $data['is_prepay'] ? $data['is_prepay'] : 0);
         $orderModel->setReceiverName($data['receiver']['name']);
         $orderModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
         $orderModel->setReceiverLat($data['sender']['lat']);
@@ -204,7 +200,7 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $deliverFeeModel->setOriginId($data['shop_order_id']); // 第三方订单号
         $deliverFeeModel->setCityCode($this->getCityCode($data['city_name']));
         $deliverFeeModel->setCargoPrice($data['cargo']['goods_value']);
-        $deliverFeeModel->setIsPrepay($data['is_prepay']);
+        $deliverFeeModel->setIsPrepay(isset($data['is_prepay']) && $data['is_prepay'] ? $data['is_prepay'] : 0);
         $deliverFeeModel->setReceiverName($data['receiver']['name']);
         $deliverFeeModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
         $deliverFeeModel->setReceiverLat($data['sender']['lat']);
