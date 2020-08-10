@@ -40,6 +40,8 @@ class Sf extends AbstractCityService implements CityServiceInterface
         $default = [
             'dev_id' => $this->getConfig('dev_id'),
             'shop_id' => $this->getConfig('shop_id'),
+            'user_lng' => $data['receiver']['lng'],
+            'user_lat' => $data['receiver']['lat'],
             'user_address' => $data['receiver']['address_detail'],
             'weight' => $data['cargo']['goods_weight'],
             'product_type' => 99,
