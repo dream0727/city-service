@@ -1,12 +1,13 @@
 <?php
+
 namespace CityService\Drivers\Dada\Api;
 
 use CityService\Drivers\Dada\Api\BaseApi;
 use CityService\Drivers\Dada\Config\UrlConfig;
 
-class AddShopApi extends BaseApi{
+class DeliverFeeApi extends BaseApi{
     
     public function __construct($params) {
-        parent::__construct(UrlConfig::SHOP_ADD_URL, $params);
+        parent::__construct(UrlConfig::DELIVER_FEE_URL, $params);
     }
 }

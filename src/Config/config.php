@@ -14,7 +14,8 @@ return [
         'dada' => [
             'appId' => 'your appid',
             'appSecret' => 'your app secret',
-            'shopId' => '',
+            'sourceId' => '',
+            'isOnline' => true, // 是否测试
         ],
     ],
 ];

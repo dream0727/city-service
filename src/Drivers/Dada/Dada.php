@@ -4,267 +4,178 @@ namespace CityService\Drivers\Dada;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
+use CityService\Drivers\Dada\Api\AddOrderApi;
+use CityService\Drivers\Dada\Api\CityCodeApi;
+use CityService\Drivers\Dada\Api\DeliverFeeApi;
+use CityService\Drivers\Dada\Api\PreAddOrderApi;
+use CityService\Drivers\Dada\Client\DadaRequestClient;
+use CityService\Drivers\Dada\Config\Config;
 use CityService\Drivers\Dada\Exceptions\DadaException;
-use CityService\Drivers\Dada\api\CityCodeApi;
-use CityService\Drivers\Dada\client\DadaRequestClient;
-use CityService\Drivers\Dada\config\Config;
+use CityService\Drivers\Dada\Model\DeliverFeeModel;
+use CityService\Drivers\Dada\Model\OrderModel;
+use CityService\Drivers\Dada\Model\PreAddOrderModel;
 use CityService\Exceptions\CityServiceException;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 
 class Dada extends AbstractCityService implements CityServiceInterface
 {
-    const BASE_URI = 'https://newopen.imdada.cn';
+    public function __construct(array $config = [])
+    {
+        $dataConfig = new Config($config['sourceId'], false);
+        $dataConfig->setAppKey($config['appId']);
+        $dataConfig->setAppSecret($config['appSecret']);
+        $this->config = $dataConfig;
+    }
 
     /**
      * 获取已支持的配送公司列表
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @return [type] [description]
      */
     public function getAllImmeDelivery(): ResponseInterface
     {
-        throw new HttpException('暂不支持该接口');
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 预下单
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function preAddOrder(array $data = []): ResponseInterface
     {
-        $cityCode = $this->getCityCode('嘉兴');
-        echo $cityCode;
-        die();
+        $deliverFee = $this->getDeliverFee($data);
+        // $preAddOrderModel = new PreAddOrderModel();
+        // $preAddOrderModel->deliveryNo = $deliverFee['deliveryNo'];
 
-        $params = $this->getParams($data);
+        // $preAddOrderApi = new PreAddOrderApi(json_encode($preAddOrderModel));
 
-        return $this->post($path, $params);
+        // $dada_client = new DadaRequestClient($this->config, $preAddOrderApi);
+        // $resp = $dada_client->makeRequest();
+
+        // if (!is_string($resp)) {
+        //     $resp->setData('result', $deliverFee);
+        // }
+
+        return $deliverFee;
     }
 
     /**
      * 下配送单
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param array $data [description]
      */
     public function addOrder(array $data = []): ResponseInterface
     {
-        $path = '/order/add';
-        $params = $this->getParams($data);
+        $orderModel = new OrderModel();
+        $orderModel->setShopNo($data['shop_no']);
+        $orderModel->setOriginId($data['shop_order_id']); // 第三方订单号
+        $orderModel->setCityCode($this->getCityCode($data['city_name']));
+        $orderModel->setCargoPrice($data['cargo']['goods_value']);
+        $orderModel->setIsPrepay($data['is_prepay']);
+        $orderModel->setReceiverName($data['receiver']['name']);
+        $orderModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
+        $orderModel->setReceiverLat($data['sender']['lat']);
+        $orderModel->setReceiverLng($data['sender']['lng']);
+        $orderModel->setReceiverPhone($data['receiver']['phone']);
+        $orderModel->setCargoWeight($data['cargo']['goods_weight']);
+        $orderModel->setProductList([
+            'sku_name' => $data['shop']['goods_name'],
+            'src_product_no' => $data['shop']['img_url'],
+            'count' => $data['shop']['goods_count'],
+        ]);
+        $orderModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
 
-        return $this->post($path, $params);
+        $addOrderApi = new AddOrderApi(json_encode($orderModel));
+
+        $dada_client = new DadaRequestClient($this->config, $addOrderApi);
+        $resp = $dada_client->makeRequest();
+
+        return $resp;
     }
 
     /**
-     *
      * 重新下单
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function reOrder(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/readd';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 增加小费
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param array $data [description]
      */
     public function addTip(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/addtips';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 预取消配送订单
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function preCancelOrder(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/precancel';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 取消配送单
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function cancelOrder(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/cancel';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 异常件退回商家确认收货
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function abnormalConfirm(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/confirm_return';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
      * 拉取配送单信息
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function getOrder(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/order/get';
-
-        return $this->post($path, $params);
+        throw new DadaException('暂不支持该接口');
     }
 
     /**
-     * 拉取配送单信息
-     *
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
+     * 模拟配送过程
+     * @param  array  $data [description]
+     * @return [type]       [description]
      */
     public function mockUpdateOrder(array $data = []): ResponseInterface
     {
-        $params = $this->getParams($data);
-        $path = '/test_update_order';
-
-        return $this->post($path, $params);
-    }
-
-    /**
-     * http post method
-     * @param       $path
-     * @param array $data
-     *
-     * @return ResponseInterface
-     * @throws CityServiceException
-     * @throws HttpException
-     * @throws \luweiss\Wechat\WechatException
-     */
-    private function post($path, array $data = []): ResponseInterface
-    {
-        try {
-            $client = new Client([
-                'timeout' => 30,
-            ]);
-            $url = substr($path, 0, 1) !== '/' ? self::BASE_URI . '/' . $path : self::BASE_URI . $path;
-            $body = $client->post($url, [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-                'query' => [],
-                'body' => json_encode($data, JSON_UNESCAPED_UNICODE),
-            ])->getBody();
-            return new Response(json_decode((string) $body, true));
-        } catch (GuzzleException $e) {
-            throw new HttpException($e->getMessage());
-        }
-    }
-
-    /**
-     * @param string $shop_order_id
-     *
-     * @return array
-     * @throws \CityService\Exceptions\CityServiceException
-     */
-    private function getParams(array $data = [])
-    {
-        // isOnline 判断是否是测试环境，会有不同的域名等
-        $isOnline = false;
-        $sourceId = 73753;
-        // 初始化一个config
-        $config = new Config($sourceId, $isOnline);
-        $config->app_key = $this->getConfig('appId');
-        $config->app_secret = $this->getConfig('appSecret');
-
-        return array_merge($data, [
-            'shop_no' => $this->getConfig('shopId'),
-            'app_key' => $this->getConfig('appId'),
-            'app_secret' => $this->getConfig('appSecret'),
-        ]);
+        throw new DadaException('暂不支持该接口');
     }
 
     private function getCityCodeList()
     {
-        $config = new Config(0, false);
+        $config = $this->config;
         $cityCodeModel = "";
         $cityCodeApi = new CityCodeApi($cityCodeModel);
 
         $dada_client = new DadaRequestClient($config, $cityCodeApi);
         $resp = $dada_client->makeRequest();
 
-
-        if ($resp->code != 0) {
-            throw new DadaException($resp->msg);
+        if ($resp->getCode() != 0) {
+            throw new DadaException($resp->getMessage());
         }
-        
-        return $resp->result;
+
+        return $resp->getData()['result'];
     }
     /**
      * 获取城市编码
@@ -281,5 +192,43 @@ class Dada extends AbstractCityService implements CityServiceInterface
         }
 
         throw new DadaException($cityName . '不支持配送');
+    }
+    /**
+     * 预下单查询运费
+     * @return [type] [description]
+     */
+    private function getDeliverFee($data)
+    {
+        $deliverFeeModel = new DeliverFeeModel();
+        $deliverFeeModel->setShopNo($data['shop_no']);
+        $deliverFeeModel->setOriginId($data['shop_order_id']); // 第三方订单号
+        $deliverFeeModel->setCityCode($this->getCityCode($data['city_name']));
+        $deliverFeeModel->setCargoPrice($data['cargo']['goods_value']);
+        $deliverFeeModel->setIsPrepay($data['is_prepay']);
+        $deliverFeeModel->setReceiverName($data['receiver']['name']);
+        $deliverFeeModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
+        $deliverFeeModel->setReceiverLat($data['sender']['lat']);
+        $deliverFeeModel->setReceiverLng($data['sender']['lng']);
+        $deliverFeeModel->setReceiverPhone($data['receiver']['phone']);
+        $deliverFeeModel->setCargoWeight($data['cargo']['goods_weight']);
+        $deliverFeeModel->setProductList([
+            'sku_name' => $data['shop']['goods_name'],
+            'src_product_no' => $data['shop']['img_url'],
+            'count' => $data['shop']['goods_count'],
+        ]);
+        $deliverFeeModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
+
+        $addOrderApi = new DeliverFeeApi(json_encode($deliverFeeModel));
+
+        $dada_client = new DadaRequestClient($this->config, $addOrderApi);
+        $resp = $dada_client->makeRequest();
+
+        if ($resp->getCode() != 0) {
+            throw new DadaException($resp->getMessage());
+        }
+
+        return $resp;
+
+        // return $resp->getData()['result'];
     }
 }

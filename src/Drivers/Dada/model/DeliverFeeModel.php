@@ -4,7 +4,7 @@ namespace CityService\Drivers\Dada\Model;
  * http://newopen.imdada.cn/#/development/file/add?_k=5f4vjj
  *
  */
-class OrderModel{
+class DeliverFeeModel{
     
     public $shop_no;
     

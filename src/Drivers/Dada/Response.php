@@ -14,27 +14,31 @@ class Response implements ResponseInterface
     public function __construct(array $data = [])
     {
         $this->data = $data;
-        // echo '<pre>';
-        // var_dump($data);
-        // echo '</pre>';
-        // die();
     }
 
     public function getCode()
     {
-        return $this->data['resultcode'] ?? $this->data['errorCode'];
+        return $this->data['code'];
     }
 
-    public function getData(){
+    public function getData()
+    {
         return $this->data ?? [];
     }
 
-    public function isSuccessful():bool {
-        return ! is_null($this->getCode()) && $this->getCode() === 0;
+    public function setData($key, $data)
+    {
+        $this->data[$key] = $data;
     }
 
-    public function getMessage():?string {
-        return $this->data['resultmsg'] ?? $this->data['msg'];
+    public function isSuccessful(): bool
+    {
+        return !is_null($this->getCode()) && $this->getCode() === 0;
+    }
+
+    public function getMessage():  ? string
+    {
+        return $this->data['msg'];
     }
 
     public function __toString()

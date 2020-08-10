@@ -1,7 +1,7 @@
 <?php
 namespace CityService\Drivers\Dada\Config;
 
-class DadaConstant{
+class Constant{
     
     const FAIL = "fail";
 

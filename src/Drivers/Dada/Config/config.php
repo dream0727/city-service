@@ -1,8 +1,9 @@
 <?php
 namespace CityService\Drivers\Dada\Config;
 
-class Config{
-    
+class Config
+{
+
     /**
      * 达达开发者app_key
      */
@@ -33,11 +34,11 @@ class Config{
      */
     public $host;
 
-
     /**
      * 构造函数
      */
-    public function __construct($source_id, $online){
+    public function __construct($source_id, $online)
+    {
         if ($online) {
             $this->source_id = $source_id;
             $this->host = "https://newopen.imdada.cn";
@@ -47,27 +48,43 @@ class Config{
         }
     }
 
-    public function getAppKey(){
+    public function setAppKey($appKey)
+    {
+        $this->app_key = $appKey;
+    }
+
+    public function getAppKey()
+    {
         return $this->app_key;
     }
 
-    public function getAppSecret(){
+    public function setAppSecret($appSecret)
+    {
+        $this->app_secret = $appSecret;
+    }
+
+    public function getAppSecret()
+    {
         return $this->app_secret;
     }
 
-    public function getV(){
+    public function getV()
+    {
         return $this->v;
     }
 
-    public function getFormat(){
+    public function getFormat()
+    {
         return $this->format;
     }
 
-    public function getSourceId(){
+    public function getSourceId()
+    {
         return $this->source_id;
     }
 
-    public function getHost(){
+    public function getHost()
+    {
         return $this->host;
     }
 }
