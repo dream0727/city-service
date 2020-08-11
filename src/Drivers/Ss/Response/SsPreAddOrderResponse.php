@@ -21,7 +21,7 @@ class SsPreAddOrderResponse implements ResponseInterface
     public function getData()
     {
         return [
-            'fee' => $this->result['data']['totalFeeAfterSave'],
+            'fee' => $this->result['data']['totalFeeAfterSave'] / 100,
             'delivery_no' => $this->result['data']['orderNumber'],
         ];
     }
