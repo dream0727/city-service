@@ -38,25 +38,25 @@ class Ss extends AbstractCityService implements CityServiceInterface
     {
         $path = 'orderCalculate';
         $receiver = [
-            "orderNo" => "C1119A000013053981",
-            "toAddress" => "望京",
-		    "toAddressDetail" => "4楼",
-            "toLatitude" => '40.004532',
-            "toLongitude" => '116.475304',
-            "toReceiverName" => '朱家帅',
-            "toMobile" => '13545880179',
+            "orderNo" => $data['shop_order_id'],
+            "toAddress" => $data['receiver']['address'] ?? '',
+		    "toAddressDetail" =>  $data['receiver']['address_detail'],
+            "toLatitude" => $data['receiver']['lat'],
+            "toLongitude" => $data['receiver']['lng'],
+            "toReceiverName" => $data['receiver']['name'],
+            "toMobile" => $data['receiver']['phone'],
             "goodType" => 10,
-            "weight" => 1,
+            "weight" => $data['cargo']['goods_weight'],
         ];
         $json = [
-            "cityName" => '北京市',
+            "cityName" => $data['sender']['city'],
             "sender" => [
-                "fromAddress" => "博彦科技大厦",
-                "fromAddressDetail" => "4层101",
-                "fromSenderName" => "小张",
-                "fromMobile" => '13693100472',
-                "fromLatitude" => '40.054759',
-                "fromLongitude" => '116.289086',
+                "fromAddress" => $data['sender']['address'],
+                "fromAddressDetail" => $data['sender']['address_detail'],
+                "fromSenderName" => $data['sender']['name'],
+                "fromMobile" => $data['sender']['phone'],
+                "fromLatitude" => $data['sender']['lat'],
+                "fromLongitude" => $data['sender']['lng'],
             ],
             "receiverList" => [
                 $receiver
