@@ -21,7 +21,7 @@ class SfPreAddOrderResponse implements ResponseInterface
     public function getData()
     {
         return [
-            'fee' => $this->result['result']['total_price'],
+            'fee' => $this->result['result']['total_price'] / 100,
         ];
     }
 
