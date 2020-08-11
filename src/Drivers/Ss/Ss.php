@@ -26,6 +26,37 @@ class Ss extends AbstractCityService implements CityServiceInterface
         // TODO: Implement getAllImmeDelivery() method.
     }
 
+
+    /**
+     * 腾讯地图---->百度地图
+     * @param double $lat 纬度
+     * @param double $lng 经度
+     */
+    private function Convert_GCJ02_To_BD09($lat,$lng){
+        $x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+        $x = $lng;
+        $y = $lat;
+        $z = sqrt($x * $x + $y * $y) + 0.00002 * sin($y * $x_pi);
+        $theta = atan2($y, $x) + 0.000003 * cos($x * $x_pi);
+        $lng = $z * cos($theta) + 0.0065;
+        $lat = $z * sin($theta) + 0.006;
+        return array('lng'=>$lng,'lat'=>$lat);
+    }
+
+    /**
+     * 转换腾讯地图坐标为百度坐标
+     * @param $data
+     */
+    private function dealPos(&$data)
+    {
+        $receiverPos = $this->Convert_GCJ02_To_BD09($data['receiver']['lat'], $data['receiver']['lng']);
+        $data['receiver']['lat'] = $receiverPos['lat'];
+        $data['receiver']['lng'] = $receiverPos['lng'];
+        $senderPos = $this->Convert_GCJ02_To_BD09($data['sender']['lat'], $data['sender']['lng']);
+        $data['sender']['lat'] = $senderPos['lat'];
+        $data['sender']['lng'] = $senderPos['lng'];
+    }
+
     /**
      * 预创建订单
      * http://open.ishansong.com/documentCenter
@@ -36,6 +67,7 @@ class Ss extends AbstractCityService implements CityServiceInterface
      */
     public function preAddOrder(array $data = []): \CityService\ResponseInterface
     {
+        $this->dealPos($data);
         $path = 'orderCalculate';
         $receiver = [
             "orderNo" => $data['shop_order_id'],
