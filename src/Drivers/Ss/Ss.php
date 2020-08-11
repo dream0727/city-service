@@ -18,8 +18,8 @@ use GuzzleHttp\Client;
  */
 class Ss extends AbstractCityService implements CityServiceInterface
 {
-    const BASE_URI = 'http://open.s.bingex.com/openapi/merchants/v5'; //开发环境
-//    const BASE_URI = 'http://open.ishansong.com/openapi/merchants/v5'; //正式环境
+    const BASE_URI_DEBUG = 'http://open.s.bingex.com/openapi/merchants/v5'; //开发环境
+    const BASE_URI = 'http://open.ishansong.com/openapi/merchants/v5'; //正式环境
 
     public function getAllImmeDelivery(): \CityService\ResponseInterface
     {
@@ -175,7 +175,16 @@ class Ss extends AbstractCityService implements CityServiceInterface
                     'timeout' => 30,
                 ]
             );
-            $url = self::BASE_URI . '/' . $path;
+            try {
+                $debug = $this->getConfig('debug');
+            } catch (\Exception $e) {
+                $debug = false;
+            }
+            if ($debug) {
+                $url = self::BASE_URI_DEBUG . '/' . $path;
+            } else {
+                $url = self::BASE_URI . '/' . $path;
+            }
             $body = $client->post(
                 $url,
                 [
