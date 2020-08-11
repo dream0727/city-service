@@ -19,4 +19,16 @@ class UrlConfig
      * 查询城市code接口
      */
     const CITY_ORDER_URL = "/api/cityCode/list";
+
+    // 模拟订单回调接口
+    // 接受订单
+    const MOCK_ACCEPT = "/api/order/accept";
+    // 完成取货
+    const MOCK_FETCH = "/api/order/fetch";
+    // 完成订单
+    const MOCK_FINISH = "/api/order/finish";
+    // 取消订单
+    const MOCK_CANCEL = "/api/order/cancel";
+    // 订单异常 货品退回
+    const MOCK_BACK = "/api/order/delivery/abnormal/back";
 }

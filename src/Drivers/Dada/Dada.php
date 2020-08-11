@@ -7,13 +7,20 @@ use CityService\CityServiceInterface;
 use CityService\Drivers\Dada\Api\AddOrderApi;
 use CityService\Drivers\Dada\Api\CityCodeApi;
 use CityService\Drivers\Dada\Api\DeliverFeeApi;
+use CityService\Drivers\Dada\Api\MockAcceptApi;
+use CityService\Drivers\Dada\Api\MockBackApi;
+use CityService\Drivers\Dada\Api\MockCancelApi;
+use CityService\Drivers\Dada\Api\MockFetchApi;
+use CityService\Drivers\Dada\Api\MockFinishApi;
 use CityService\Drivers\Dada\Client\DadaRequestClient;
 use CityService\Drivers\Dada\Config\Config;
 use CityService\Drivers\Dada\Exceptions\DadaException;
 use CityService\Drivers\Dada\Model\DeliverFeeModel;
+use CityService\Drivers\Dada\Model\MockModel;
 use CityService\Drivers\Dada\Model\OrderModel;
 use CityService\Drivers\Dada\Response\DadaAddOrderResponse;
 use CityService\Drivers\Dada\Response\DadaPreAddOrderResponse;
+use CityService\Drivers\Dada\Response\MockResponse;
 use CityService\ResponseInterface;
 
 class Dada extends AbstractCityService implements CityServiceInterface
@@ -146,7 +153,36 @@ class Dada extends AbstractCityService implements CityServiceInterface
      */
     public function mockUpdateOrder(array $data = []): ResponseInterface
     {
-        throw new DadaException('暂不支持该接口');
+        $orderModel = new MockModel();
+        $orderModel->setOrderId($data['shop_order_id']);
+        // var_dump($orderModel);
+        // die();
+
+        switch ($data['mock_type']) {
+            case 'ACCEPT':
+                $mockApi = new MockAcceptApi(json_encode($orderModel));
+                break;
+            case 'FETCH':
+                $mockApi = new MockFetchApi(json_encode($orderModel));
+                break;
+            case 'FINISH':
+                $mockApi = new MockFinishApi(json_encode($orderModel));
+                break;
+            case 'CANCEL':
+                $mockApi = new MockCancelApi(json_encode($orderModel));
+                break;
+            case 'BACK':
+                $mockApi = new MockBackApi(json_encode($orderModel));
+                break;
+            default:
+                throw new DadaException('模拟类型不存在');
+                break;
+        }
+
+        $dada_client = new DadaRequestClient($this->config, $mockApi);
+        $resp = new MockResponse(json_decode($dada_client->makeRequest(), true));
+
+        return $resp;
     }
 
     private function getCityCodeList()
