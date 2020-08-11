@@ -12,6 +12,8 @@ use CityService\Drivers\Dada\Config\Config;
 use CityService\Drivers\Dada\Exceptions\DadaException;
 use CityService\Drivers\Dada\Model\DeliverFeeModel;
 use CityService\Drivers\Dada\Model\OrderModel;
+use CityService\Drivers\Dada\Response\DadaAddOrderResponse;
+use CityService\Drivers\Dada\Response\DadaPreAddOrderResponse;
 use CityService\ResponseInterface;
 
 class Dada extends AbstractCityService implements CityServiceInterface
@@ -41,17 +43,6 @@ class Dada extends AbstractCityService implements CityServiceInterface
     public function preAddOrder(array $data = []): ResponseInterface
     {
         $deliverFee = $this->getDeliverFee($data);
-        // $preAddOrderModel = new PreAddOrderModel();
-        // $preAddOrderModel->deliveryNo = $deliverFee['deliveryNo'];
-
-        // $preAddOrderApi = new PreAddOrderApi(json_encode($preAddOrderModel));
-
-        // $dada_client = new DadaRequestClient($this->config, $preAddOrderApi);
-        // $resp = $dada_client->makeRequest();
-
-        // if (!is_string($resp)) {
-        //     $resp->setData('result', $deliverFee);
-        // }
 
         return $deliverFee;
     }
@@ -84,7 +75,7 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $addOrderApi = new AddOrderApi(json_encode($orderModel));
 
         $dada_client = new DadaRequestClient($this->config, $addOrderApi);
-        $resp = $dada_client->makeRequest();
+        $resp = new DadaAddOrderResponse(json_decode($dada_client->makeRequest(), true));
 
         return $resp;
     }
@@ -167,11 +158,13 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $dada_client = new DadaRequestClient($config, $cityCodeApi);
         $resp = $dada_client->makeRequest();
 
-        if ($resp->getCode() != 0) {
-            throw new DadaException($resp->getMessage());
+        $result = json_decode($resp, true);
+
+        if ($result['code'] != 0) {
+            throw new DadaException($result['msg']);
         }
 
-        return $resp->getData()['result'];
+        return $result['result'];
     }
     /**
      * 获取城市编码
@@ -217,14 +210,8 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $addOrderApi = new DeliverFeeApi(json_encode($deliverFeeModel));
 
         $dada_client = new DadaRequestClient($this->config, $addOrderApi);
-        $resp = $dada_client->makeRequest();
-
-        if ($resp->getCode() != 0) {
-            throw new DadaException($resp->getMessage());
-        }
+        $resp = new DadaPreAddOrderResponse(json_decode($dada_client->makeRequest(), true));
 
         return $resp;
-
-        // return $resp->getData()['result'];
     }
 }

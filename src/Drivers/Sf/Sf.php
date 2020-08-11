@@ -4,6 +4,8 @@ namespace CityService\Drivers\Sf;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
+use CityService\Drivers\Sf\Response\SfAddOrderResponse;
+use CityService\Drivers\Sf\Response\SfPreAddOrderResponse;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
 use GuzzleHttp\Client;
@@ -51,7 +53,9 @@ class Sf extends AbstractCityService implements CityServiceInterface
             'is_person_direct' => 0,
             'push_time' => time()
         ];
-        return $this->post($path, $default);
+        $result = $this->post($path, $default);
+
+        return new SfPreAddOrderResponse(json_decode($result, true));
     }
 
     /**
@@ -93,7 +97,8 @@ class Sf extends AbstractCityService implements CityServiceInterface
                 'product_type_num' => 1,
             ]
         ];
-        return $this->post($path, $default);
+        $result = $this->post($path, $default);
+        return new SfAddOrderResponse(json_decode($result, true));
     }
 
     public function reOrder(array $data = []): \CityService\ResponseInterface
@@ -142,7 +147,7 @@ class Sf extends AbstractCityService implements CityServiceInterface
         return $sign;
     }
 
-    private function post($path, array $data = []): ResponseInterface
+    private function post($path, array $data = [])
     {
         try {
             $client = new Client(
@@ -164,7 +169,7 @@ class Sf extends AbstractCityService implements CityServiceInterface
                     'body' => json_encode($data)
                 ]
             )->getBody();
-            return new Response(json_decode((string)$body, true));
+            return $body;
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }

@@ -4,6 +4,8 @@ namespace CityService\Drivers\Wechat;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
+use CityService\Drivers\Wechat\Response\WechatAddOrderResponse;
+use CityService\Drivers\Wechat\Response\WechatPreAddOrderResponse;
 use CityService\Exceptions\CityServiceException;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
@@ -42,8 +44,9 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     {
         $path = '/order/pre_add';
         $params = $this->getParams($data);
+        $result = $this->post($path, $params);
 
-        return $this->post($path, $params);
+        return new WechatPreAddOrderResponse(json_decode($result, true));
     }
 
     /**
@@ -60,8 +63,9 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     {
         $path = '/order/add';
         $params = $this->getParams($data);
+        $result = $this->post($path, $params);
 
-        return $this->post($path, $params);
+        return new WechatAddOrderResponse(json_decode($result, true));
     }
 
     /**
@@ -201,7 +205,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    private function post($path, array $data = []): ResponseInterface
+    private function post($path, array $data = [])
     {
         try {
             $client = new Client([
@@ -214,7 +218,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
                 ],
                 'body'  => json_encode($data, JSON_UNESCAPED_UNICODE)
             ])->getBody();
-            return new Response(json_decode((string)$body, true));
+            return $body;
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }

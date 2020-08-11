@@ -17,5 +17,16 @@ return [
             'sourceId' => '',
             'isOnline' => true, // 是否测试
         ],
+        'sf' => [
+            'dev_id' => '',
+            'dev_key' => '',
+            'shop_id' => '',
+        ],
+        'ss' => [
+            'client_id' => '',
+            'secret' => '',
+            'shop_id' => '',
+            'debug' => false,// 是否开启调试
+        ],
     ],
 ];

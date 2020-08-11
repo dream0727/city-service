@@ -1,7 +1,6 @@
 <?php
 namespace CityService\Drivers\Dada\Client;
 
-use CityService\Drivers\Dada\Response;
 use GuzzleHttp\Client;
 
 /**
@@ -43,7 +42,8 @@ class DadaRequestClient
     {
         $reqParams = $this->bulidRequestParams();
         $resp = $this->getHttpRequestWithPost(json_encode($reqParams));
-        return $this->parseResponseData($resp);
+        return $resp;
+        // return $this->parseResponseData($resp);
     }
 
     /**
@@ -146,22 +146,20 @@ class DadaRequestClient
      */
     public function parseResponseData($arr)
     {
-        // $resp = new DadaResponse();
-        // if (empty($arr)) {
-        //     $resp->setStatus(DadaConstant::FAIL);
-        //     $resp->setMsg(DadaConstant::FAIL_MSG);
-        //     $resp->setCode(DadaConstant::FAIL_CODE);
-        // }else{
-        //     $data = json_decode($arr, true);
-        //     $resp->setStatus($data['status']);
-        //     $resp->setMsg($data['msg']);
-        //     $resp->setCode($data['code']);
-        //     $resp->setResult($data['result']);
-        // }
+        $resp = new DadaResponse();
+        if (empty($arr)) {
+            $resp->setStatus(DadaConstant::FAIL);
+            $resp->setMsg(DadaConstant::FAIL_MSG);
+            $resp->setCode(DadaConstant::FAIL_CODE);
+        }else{
+            $data = json_decode($arr, true);
+            $resp->setStatus($data['status']);
+            $resp->setMsg($data['msg']);
+            $resp->setCode($data['code']);
+            $resp->setResult($data['result']);
+        }
 
-        // return $resp;
-
-        return new Response(json_decode((string) $arr, true));
+        return $resp;
     }
 
     public function getConfig()

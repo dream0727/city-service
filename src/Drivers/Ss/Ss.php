@@ -4,6 +4,8 @@ namespace CityService\Drivers\Ss;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
+use CityService\Drivers\Ss\Response\SsAddOrderResponse;
+use CityService\Drivers\Ss\Response\SsPreAddOrderResponse;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
 use GuzzleHttp\Client;
@@ -40,7 +42,7 @@ class Ss extends AbstractCityService implements CityServiceInterface
         $receiver = [
             "orderNo" => $data['shop_order_id'],
             "toAddress" => $data['receiver']['address'] ?? '',
-		    "toAddressDetail" =>  $data['receiver']['address_detail'],
+            "toAddressDetail" => $data['receiver']['address_detail'],
             "toLatitude" => $data['receiver']['lat'],
             "toLongitude" => $data['receiver']['lng'],
             "toReceiverName" => $data['receiver']['name'],
@@ -59,24 +61,27 @@ class Ss extends AbstractCityService implements CityServiceInterface
                 "fromLongitude" => $data['sender']['lng'],
             ],
             "receiverList" => [
-                $receiver
+                $receiver,
             ],
             "appointType" => 0,
         ];
 
         //返回当前的毫秒时间戳
-        function getMillisecond() {
+        function getMillisecond()
+        {
             list($t1, $t2) = explode(' ', microtime());
-            return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+            return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
         }
 
         $default = [
             'clientId' => $this->getConfig('client_id'),
             'shopId' => $this->getConfig('shop_id'),
             'timestamp' => getMillisecond(),
-            'data' => json_encode($json)
+            'data' => json_encode($json),
         ];
-        return $this->post($path, $default);
+
+        $result = $this->post($path, $default);
+        return new SsPreAddOrderResponse(json_decode($result, true));
     }
 
     /**
@@ -92,22 +97,25 @@ class Ss extends AbstractCityService implements CityServiceInterface
         $path = 'orderPlace';
 
         $json = [
-            "issOrderNo" => $data['issOrderNo']
+            "issOrderNo" => $data['delivery_no'],
         ];
 
         //返回当前的毫秒时间戳
-        function getMillisecond() {
+        function getMillisecond()
+        {
             list($t1, $t2) = explode(' ', microtime());
-            return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+            return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
         }
 
         $default = [
             'clientId' => $this->getConfig('client_id'),
             'shopId' => $this->getConfig('shop_id'),
             'timestamp' => getMillisecond(),
-            'data' => json_encode($json)
+            'data' => json_encode($json),
         ];
-        return $this->post($path, $default);
+
+        $result = $this->post($path, $default);
+        return new SsAddOrderResponse(json_decode($result, true));
     }
 
     public function reOrder(array $data = []): \CityService\ResponseInterface
@@ -159,13 +167,13 @@ class Ss extends AbstractCityService implements CityServiceInterface
                 $string .= ($i . $arg);
             }
         }
-        $string = $this->getConfig('secret').$string;
+        $string = $this->getConfig('secret') . $string;
         $string = md5($string);
         $result = strtoupper($string);
         return $result;
     }
 
-    private function post($path, array $data = []): ResponseInterface
+    private function post($path, array $data = [])
     {
         try {
             $data['sign'] = $this->makeSign($data);
@@ -188,10 +196,10 @@ class Ss extends AbstractCityService implements CityServiceInterface
             $body = $client->post(
                 $url,
                 [
-                    'form_params' => $data
+                    'form_params' => $data,
                 ]
             )->getBody();
-            return new Response(json_decode((string)$body, true));
+            return $body;
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }
