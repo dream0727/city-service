@@ -5,6 +5,8 @@ namespace CityService\Drivers\Wechat;
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
 use CityService\Drivers\Wechat\Response\WechatAddOrderResponse;
+use CityService\Drivers\Wechat\Response\WechatDeliveryResponse;
+use CityService\Drivers\Wechat\Response\WechatMockResponse;
 use CityService\Drivers\Wechat\Response\WechatPreAddOrderResponse;
 use CityService\Exceptions\CityServiceException;
 use CityService\Exceptions\HttpException;
@@ -27,7 +29,10 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function getAllImmeDelivery(): ResponseInterface
     {
         $path = '/delivery/getall';
-        return $this->post($path);
+
+        $result = $this->post($path);
+
+        return new WechatDeliveryResponse(json_decode($result, true));
     }
 
     /**
@@ -59,7 +64,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function addOrder(array $data = []):ResponseInterface
+    public function addOrder(array $data = []): ResponseInterface
     {
         $path = '/order/add';
         $params = $this->getParams($data);
@@ -79,7 +84,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function reOrder(array $data = []):ResponseInterface
+    public function reOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/readd';
@@ -97,7 +102,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function addTip(array $data = []):ResponseInterface
+    public function addTip(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/addtips';
@@ -115,7 +120,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function preCancelOrder(array $data = []):ResponseInterface
+    public function preCancelOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/precancel';
@@ -133,7 +138,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function cancelOrder(array $data = []):ResponseInterface
+    public function cancelOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/cancel';
@@ -151,7 +156,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function abnormalConfirm(array $data = []):ResponseInterface
+    public function abnormalConfirm(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/confirm_return';
@@ -169,7 +174,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function getOrder(array $data = []):ResponseInterface
+    public function getOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/order/get';
@@ -187,12 +192,14 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function mockUpdateOrder(array $data = []):ResponseInterface
+    public function mockUpdateOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
         $path = '/test_update_order';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatMockResponse(json_decode($result, true));
     }
 
     /**
@@ -214,9 +221,9 @@ class Wechat extends AbstractCityService implements CityServiceInterface
             $url = substr($path, 0, 1) !== '/' ? self::BASE_URI . '/' . $path : self::BASE_URI . $path;
             $body = $client->post($url, [
                 'query' => [
-                    'access_token' => $this->getAccessToken()
+                    'access_token' => $this->getAccessToken(),
                 ],
-                'body'  => json_encode($data, JSON_UNESCAPED_UNICODE)
+                'body' => json_encode($data, JSON_UNESCAPED_UNICODE),
             ])->getBody();
             return $body;
         } catch (GuzzleException $e) {
@@ -230,15 +237,16 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @return array
      * @throws \CityService\Exceptions\CityServiceException
      */
-    private function getParams(array $data = []) {
-        if(!isset($data['shop_order_id'])) {
+    private function getParams(array $data = [])
+    {
+        if (!isset($data['shop_order_id'])) {
             throw new CityServiceException('The shop_order_id field is required.');
         }
 
         return array_merge($data, [
-            'shopid'        => $this->getConfig('shopId'),
-            'delivery_id'   => $this->getConfig('deliveryId'),
-            'delivery_sign' => SHA1($this->getConfig('shopId') . $data['shop_order_id'] . $this->getConfig('deliveryAppSecret'))
+            'shopid' => $this->getConfig('shopId'),
+            'delivery_id' => $this->getConfig('deliveryId'),
+            'delivery_sign' => SHA1($this->getConfig('shopId') . $data['shop_order_id'] . $this->getConfig('deliveryAppSecret')),
         ]);
     }
 
@@ -255,7 +263,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     private function getAccessToken($refresh = false)
     {
         return (new \luweiss\Wechat\Wechat([
-            'appId'     => $this->getConfig('appId'),
+            'appId' => $this->getConfig('appId'),
             'appSecret' => $this->getConfig('appSecret'),
         ]))->getAccessToken($refresh);
     }
