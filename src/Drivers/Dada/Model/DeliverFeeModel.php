@@ -28,9 +28,9 @@ class DeliverFeeModel{
 
     public $callback;
 
-    public $cargoWeight;
+    public $cargo_weight;
 
-    public $productList;
+    public $product_list;
 
 
     public function setShopNo($shopNo)
@@ -145,22 +145,22 @@ class DeliverFeeModel{
 
     public function setCargoWeight($cargoWeight)
     {
-        !empty($cargoWeight) ? $this->cargoWeight = $cargoWeight : trigger_error('cargoWeight不能为空', E_USER_ERROR);
+        !empty($cargoWeight) ? $this->cargo_weight = $cargoWeight : trigger_error('cargoWeight不能为空', E_USER_ERROR);
     }
 
     public function getCargoWeight()
     {
-        return $this->cargoWeight;
+        return $this->cargo_weight;
     }
 
     public function setProductList($productList)
     {
-        !empty($productList) ? $this->productList = $productList : trigger_error('productList不能为空', E_USER_ERROR);
+        !empty($productList) ? $this->product_list = $productList : trigger_error('productList不能为空', E_USER_ERROR);
     }
 
     public function getProductList()
     {
-        return $this->productList;
+        return $this->product_list;
     }
 
 }

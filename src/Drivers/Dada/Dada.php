@@ -72,11 +72,15 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $orderModel->setReceiverLng($data['sender']['lng']);
         $orderModel->setReceiverPhone($data['receiver']['phone']);
         $orderModel->setCargoWeight($data['cargo']['goods_weight']);
-        $orderModel->setProductList([
-            'sku_name' => $data['shop']['goods_name'],
-            'src_product_no' => $data['shop']['img_url'],
-            'count' => $data['shop']['goods_count'],
-        ]);
+        $productList = [];
+        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
+            $productList[] = [
+                'sku_name' => $item['good_name'],
+                'src_product_no' => $item['good_no'] ?: '',
+                'count' => number_format($item['good_count'], 2),
+            ];
+        }
+        $orderModel->setProductList($productList);
         $orderModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
 
         $addOrderApi = new AddOrderApi(json_encode($orderModel));
@@ -236,11 +240,16 @@ class Dada extends AbstractCityService implements CityServiceInterface
         $deliverFeeModel->setReceiverLng($data['sender']['lng']);
         $deliverFeeModel->setReceiverPhone($data['receiver']['phone']);
         $deliverFeeModel->setCargoWeight($data['cargo']['goods_weight']);
-        $deliverFeeModel->setProductList([
-            'sku_name' => $data['shop']['goods_name'],
-            'src_product_no' => $data['shop']['img_url'],
-            'count' => $data['shop']['goods_count'],
-        ]);
+
+        $productList = [];
+        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
+            $productList[] = [
+                'sku_name' => $item['good_name'],
+                'src_product_no' => $item['good_no'] ?: '',
+                'count' => number_format($item['good_count'], 2),
+            ];
+        }
+        $deliverFeeModel->setProductList($productList);
         $deliverFeeModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
 
         $addOrderApi = new DeliverFeeApi(json_encode($deliverFeeModel));
