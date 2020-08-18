@@ -27,7 +27,7 @@ class Dada extends AbstractCityService implements CityServiceInterface
 {
     public function __construct(array $config = [])
     {
-        $dataConfig = new Config($config['sourceId'], false);
+        $dataConfig = new Config($config['sourceId'], $config['isDebug'] ? false : true);
         $dataConfig->setAppKey($config['appId']);
         $dataConfig->setAppSecret($config['appSecret']);
         $this->config = $dataConfig;

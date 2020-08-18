@@ -15,7 +15,7 @@ return [
             'appId' => 'your appid',
             'appSecret' => 'your app secret',
             'sourceId' => '',
-            'isOnline' => true, // 是否测试
+            'isDebug' => true, // 是否测试
         ],
         'sf' => [
             'dev_id' => '',
