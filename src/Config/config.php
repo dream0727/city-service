@@ -26,7 +26,12 @@ return [
             'client_id' => '',
             'secret' => '',
             'shop_id' => '',
-            'debug' => false,// 是否开启调试
+            'debug' => false, // 是否开启调试
+        ],
+        'mt' => [
+            'appKey' => '',
+            'appSecret' => '',
+            'shop_id' => '',
         ],
     ],
 ];
