@@ -4,259 +4,201 @@ namespace CityService\Drivers\Dada;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
-use CityService\Drivers\Dada\Api\AddOrderApi;
-use CityService\Drivers\Dada\Api\CityCodeApi;
-use CityService\Drivers\Dada\Api\DeliverFeeApi;
-use CityService\Drivers\Dada\Api\MockAcceptApi;
-use CityService\Drivers\Dada\Api\MockBackApi;
-use CityService\Drivers\Dada\Api\MockCancelApi;
-use CityService\Drivers\Dada\Api\MockFetchApi;
-use CityService\Drivers\Dada\Api\MockFinishApi;
-use CityService\Drivers\Dada\Client\DadaRequestClient;
-use CityService\Drivers\Dada\Config\Config;
-use CityService\Drivers\Dada\Exceptions\DadaException;
-use CityService\Drivers\Dada\Model\DeliverFeeModel;
-use CityService\Drivers\Dada\Model\MockModel;
-use CityService\Drivers\Dada\Model\OrderModel;
-use CityService\Drivers\Dada\Response\DadaAddOrderResponse;
-use CityService\Drivers\Dada\Response\DadaPreAddOrderResponse;
-use CityService\Drivers\Dada\Response\MockResponse;
+use CityService\Drivers\Dada\Response\DadaResponse;
+use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
+use GuzzleHttp\Client;
 
 class Dada extends AbstractCityService implements CityServiceInterface
 {
-    public function __construct(array $config = [])
+    const BASE_URI = 'https://newopen.imdada.cn';
+    const TEST_URI = 'http://newopen.qa.imdada.cn';
+
+    public function getAllImmeDelivery(): \CityService\ResponseInterface
     {
-        $dataConfig = new Config($config['sourceId'], $config['isDebug'] ? false : true);
-        $dataConfig->setAppKey($config['appId']);
-        $dataConfig->setAppSecret($config['appSecret']);
-        $this->config = $dataConfig;
+        // TODO: Implement getAllImmeDelivery() method.
     }
 
     /**
-     * 获取已支持的配送公司列表
-     * @return [type] [description]
+     * 预创建订单
+     * https://newopen.imdada.cn/#/development/file/readyAdd?_k=qwld89
+     * @param array $data
+     * @return ResponseInterface
+     * @throws HttpException
+     * @throws \CityService\Exceptions\CityServiceException
      */
-    public function getAllImmeDelivery(): ResponseInterface
+    public function preAddOrder(array $data = []): \CityService\ResponseInterface
     {
-        throw new DadaException('暂不支持该接口');
+        $path = '/api/order/queryDeliverFee';
+
+        $result = $this->post($path, $data);
+
+        return new DadaResponse(json_decode($result, true));
     }
 
     /**
-     * 预下单
-     * @param  array  $data [description]
-     * @return [type]       [description]
+     * 创建订单
+     * http://commit-openic.sf-express.com/open/api/docs/index#/apidoc
+     * @param array $data
+     * @return ResponseInterface
+     * @throws HttpException
+     * @throws \CityService\Exceptions\CityServiceException
      */
-    public function preAddOrder(array $data = []): ResponseInterface
+    public function addOrder(array $data = []): \CityService\ResponseInterface
     {
-        $deliverFee = $this->getDeliverFee($data);
+        $path = '/api/order/addAfterQuery';
 
-        return $deliverFee;
+        $result = $this->post($path, $data);
+
+        return new DadaResponse(json_decode($result, true));
+    }
+
+    public function reOrder(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement reOrder() method.
+    }
+
+    public function addTip(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement addTip() method.
+    }
+
+    public function preCancelOrder(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement preCancelOrder() method.
+    }
+
+    public function cancelOrder(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement cancelOrder() method.
+    }
+
+    public function abnormalConfirm(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement abnormalConfirm() method.
+    }
+
+    public function getOrder(array $data = []): \CityService\ResponseInterface
+    {
+        // TODO: Implement getOrder() method.
     }
 
     /**
-     * 下配送单
-     * @param array $data [description]
+     * 模拟配送测试
+     * https://peisong.meituan.com/open/doc#section3-2
+     * @param  [type] $mockType [description]
+     * @param  array  $data     [description]
+     * @return [type]           [description]
      */
-    public function addOrder(array $data = []): ResponseInterface
+    public function mockUpdateOrder(array $data = [], array $params = []): \CityService\ResponseInterface
     {
-        $orderModel = new OrderModel();
-        $orderModel->setShopNo($data['shop_no']);
-        $orderModel->setOriginId($data['shop_order_id']); // 第三方订单号
-        $orderModel->setCityCode($this->getCityCode($data['city_name']));
-        $orderModel->setCargoPrice($data['cargo']['goods_value']);
-        $orderModel->setIsPrepay(isset($data['is_prepay']) && $data['is_prepay'] ? $data['is_prepay'] : 0);
-        $orderModel->setReceiverName($data['receiver']['name']);
-        $orderModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
-        $orderModel->setReceiverLat($data['sender']['lat']);
-        $orderModel->setReceiverLng($data['sender']['lng']);
-        $orderModel->setReceiverPhone($data['receiver']['phone']);
-        $orderModel->setCargoWeight($data['cargo']['goods_weight']);
-        $productList = [];
-        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
-            $productList[] = [
-                'sku_name' => $item['good_name'],
-                'src_product_no' => $item['good_no'] ?: '',
-                'count' => number_format($item['good_count'], 2),
-            ];
+        if (!isset($params['mock_type'])) {
+            throw new MtException('mock_type异常');
         }
-        $orderModel->setProductList($productList);
-        $orderModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
 
-        $addOrderApi = new AddOrderApi(json_encode($orderModel));
-
-        $dada_client = new DadaRequestClient($this->config, $addOrderApi);
-        $resp = new DadaAddOrderResponse(json_decode($dada_client->makeRequest(), true));
-
-        return $resp;
-    }
-
-    /**
-     * 重新下单
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function reOrder(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 增加小费
-     * @param array $data [description]
-     */
-    public function addTip(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 预取消配送订单
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function preCancelOrder(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 取消配送单
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function cancelOrder(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 异常件退回商家确认收货
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function abnormalConfirm(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 拉取配送单信息
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function getOrder(array $data = []): ResponseInterface
-    {
-        throw new DadaException('暂不支持该接口');
-    }
-
-    /**
-     * 模拟配送过程
-     * @param  array  $data [description]
-     * @return [type]       [description]
-     */
-    public function mockUpdateOrder(array $data = []): ResponseInterface
-    {
-        $orderModel = new MockModel();
-        $orderModel->setOrderId($data['shop_order_id']);
-        // var_dump($orderModel);
-        // die();
-
-        switch ($data['mock_type']) {
-            case 'ACCEPT':
-                $mockApi = new MockAcceptApi(json_encode($orderModel));
+        switch ($params['mock_type']) {
+            // 模拟接单
+            case 'accept':
+                $path = '/api/order/accept';
                 break;
-            case 'FETCH':
-                $mockApi = new MockFetchApi(json_encode($orderModel));
+            // 模拟取货
+            case 'fetch':
+                $path = '/api/order/fetch';
                 break;
-            case 'FINISH':
-                $mockApi = new MockFinishApi(json_encode($orderModel));
+            // 模拟完成
+            case 'finish':
+                $path = '/api/order/finish';
                 break;
-            case 'CANCEL':
-                $mockApi = new MockCancelApi(json_encode($orderModel));
+            // 模拟取消
+            case 'cancel':
+                $path = '/api/order/cancel';
                 break;
-            case 'BACK':
-                $mockApi = new MockBackApi(json_encode($orderModel));
+            // 模拟订单异常
+            case 'back':
+                $path = '/api/order/delivery/abnormal/back';
                 break;
             default:
-                throw new DadaException('模拟类型不存在');
+                throw new MtException('未知模拟类型');
                 break;
         }
 
-        $dada_client = new DadaRequestClient($this->config, $mockApi);
-        $resp = new MockResponse(json_decode($dada_client->makeRequest(), true));
+        $result = $this->post($path, $data);
 
-        return $resp;
+        return new DadaResponse(json_decode($result, true));
     }
 
-    private function getCityCodeList()
-    {
-        $config = $this->config;
-        $cityCodeModel = "";
-        $cityCodeApi = new CityCodeApi($cityCodeModel);
-
-        $dada_client = new DadaRequestClient($config, $cityCodeApi);
-        $resp = $dada_client->makeRequest();
-
-        $result = json_decode($resp, true);
-
-        if ($result['code'] != 0) {
-            throw new DadaException($result['msg']);
-        }
-
-        return $result['result'];
-    }
     /**
-     * 获取城市编码
-     * @param  [stirng] $cityName [城市名称 例如: 上海]
-     * @return [string]           [description]
+     * 签名验证
+     * https://newopen.imdada.cn/#/quickStart/develop/safety?_k=s9qqt0
+     * @param  [type] $data [description]
+     * @return [type]       [description]
      */
-    private function getCityCode($cityName)
+    private function makeSign($data)
     {
-        $cityCodeList = $this->getCityCodeList();
-        foreach ($cityCodeList as $key => $item) {
-            if ($item['cityName'] == $cityName) {
-                return $item['cityCode'];
-            }
-        }
+        //1.升序排序
+        ksort($data);
 
-        throw new DadaException($cityName . '不支持配送');
+        //2.字符串拼接
+        $args = "";
+        foreach ($data as $key => $value) {
+            $args .= $key . $value;
+        }
+        $args = $this->getConfig('appSecret') . $args . $this->getConfig('appSecret');
+        //3.MD5签名,转为大写
+        $sign = strtoupper(md5($args));
+
+        return $sign;
     }
+
     /**
-     * 预下单查询运费
+     * https://newopen.imdada.cn/#/quickStart/develop/mustRead?_k=dt6eiy
+     * @param  [type] $path [description]
+     * @param  array  $data [description]
+     * @return [type]       [description]
+     */
+    private function post($path, array $data = [])
+    {
+        try {
+            // 系统参数
+            $newDada['app_key'] = $this->getConfig('appKey');
+            $newDada['body'] = !empty($data) ? json_encode($data, JSON_UNESCAPED_UNICODE) : "";
+            $newDada['format'] = 'json';
+            $newDada['v'] = '1.0';
+            $newDada['source_id'] = $this->getConfig('sourceId');
+            $newDada['timestamp'] = time();
+            $newDada['signature'] = $this->makeSign($newDada);
+
+            $client = new Client([
+                'verify' => false,
+                'timeout' => 30,
+            ]);
+
+            $baseUrl = $this->getConfig('debug') ? self::TEST_URI : self::BASE_URI;
+            $url = $baseUrl . $path;
+
+            return $client->post($url, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => json_encode($newDada, JSON_UNESCAPED_UNICODE),
+            ])->getBody();
+
+        } catch (GuzzleException $e) {
+            throw new HttpException($e->getMessage());
+        }
+    }
+
+    /**
+     * 获取城市信息
+     * https://newopen.imdada.cn/#/development/file/cityList?_k=j5ml79
      * @return [type] [description]
      */
-    private function getDeliverFee($data)
+    public function getCityCodeList(): \CityService\ResponseInterface
     {
-        $deliverFeeModel = new DeliverFeeModel();
-        $deliverFeeModel->setShopNo($data['shop_no']);
-        $deliverFeeModel->setOriginId($data['shop_order_id']); // 第三方订单号
-        $deliverFeeModel->setCityCode($this->getCityCode($data['city_name']));
-        $deliverFeeModel->setCargoPrice($data['cargo']['goods_value']);
-        $deliverFeeModel->setIsPrepay(isset($data['is_prepay']) && $data['is_prepay'] ? $data['is_prepay'] : 0);
-        $deliverFeeModel->setReceiverName($data['receiver']['name']);
-        $deliverFeeModel->setReceiverAddress($data['receiver']['address'] . $data['receiver']['address_detail']);
-        $deliverFeeModel->setReceiverLat($data['sender']['lat']);
-        $deliverFeeModel->setReceiverLng($data['sender']['lng']);
-        $deliverFeeModel->setReceiverPhone($data['receiver']['phone']);
-        $deliverFeeModel->setCargoWeight($data['cargo']['goods_weight']);
+        $path = '/api/cityCode/list';
 
-        $productList = [];
-        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
-            $productList[] = [
-                'sku_name' => $item['good_name'],
-                'src_product_no' => $item['good_no'] ?: '',
-                'count' => number_format($item['good_count'], 2),
-            ];
-        }
-        $deliverFeeModel->setProductList($productList);
-        $deliverFeeModel->setCallback($data['callback']); // 回调url, 每次订单状态变更会通知该url(参照回调接口)
+        $result = $this->post($path);
 
-        $addOrderApi = new DeliverFeeApi(json_encode($deliverFeeModel));
-
-        $dada_client = new DadaRequestClient($this->config, $addOrderApi);
-        $resp = new DadaPreAddOrderResponse(json_decode($dada_client->makeRequest(), true));
-
-        return $resp;
+        return new DadaResponse(json_decode($result, true));
     }
 }

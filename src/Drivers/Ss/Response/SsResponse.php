@@ -1,10 +1,10 @@
 <?php
 
-namespace CityService\Drivers\Sf\Response;
+namespace CityService\Drivers\Ss\Response;
 
 use CityService\ResponseInterface;
 
-class SfPreAddOrderResponse implements ResponseInterface
+class SsResponse implements ResponseInterface
 {
     private $result;
 
@@ -15,14 +15,7 @@ class SfPreAddOrderResponse implements ResponseInterface
 
     public function getCode()
     {
-        return $this->result['error_code'];
-    }
-    
-    public function getData()
-    {
-        return [
-            'fee' => $this->result['result']['total_price'] / 100,
-        ];
+        return $this->result['status'];
     }
 
     public function getOriginalData()
@@ -32,11 +25,11 @@ class SfPreAddOrderResponse implements ResponseInterface
 
     public function isSuccessful(): bool
     {
-        return !is_null($this->getCode()) && $this->getCode() === 0;
+        return !is_null($this->getCode()) && $this->getCode() === 200;
     }
 
     public function getMessage():  ? string
     {
-        return $this->result['error_msg'];
+        return $this->result['msg'];
     }
 }

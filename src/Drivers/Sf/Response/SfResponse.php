@@ -1,10 +1,10 @@
 <?php
 
-namespace CityService\Drivers\Wechat\Response;
+namespace CityService\Drivers\Sf\Response;
 
 use CityService\ResponseInterface;
 
-class WechatAddOrderResponse implements ResponseInterface
+class SfResponse implements ResponseInterface
 {
     private $result;
 
@@ -15,17 +15,12 @@ class WechatAddOrderResponse implements ResponseInterface
 
     public function getCode()
     {
-        return isset($this->result['errcode']) ? $this->result['errcode'] : $this->result['resultcode'];
-    }
-    
-    public function getData()
-    {
-        return $this->result;
+        return $this->result['error_code'];
     }
 
     public function getOriginalData()
     {
-        return $this->result;
+    	return $this->result;
     }
 
     public function isSuccessful(): bool
@@ -35,6 +30,6 @@ class WechatAddOrderResponse implements ResponseInterface
 
     public function getMessage():  ? string
     {
-        return isset($this->result['errmsg']) ? $this->result['errmsg'] : $this->result['resultmsg'];
+        return $this->result['error_msg'];
     }
 }

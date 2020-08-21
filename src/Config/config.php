@@ -12,10 +12,10 @@ return [
             'deliveryAppSecret' => 'delivery app secret',
         ],
         'dada' => [
-            'appId' => 'your appid',
+            'appKey' => 'your appKey',
             'appSecret' => 'your app secret',
             'sourceId' => '',
-            'isDebug' => true, // 是否测试
+            'debug' => true, // 是否测试
         ],
         'sf' => [
             'dev_id' => '',
@@ -23,15 +23,15 @@ return [
             'shop_id' => '',
         ],
         'ss' => [
-            'client_id' => '',
+            'clientId' => '',
             'secret' => '',
-            'shop_id' => '',
+            'shopId' => '',
             'debug' => false, // 是否开启调试
         ],
         'mt' => [
             'appKey' => '',
             'appSecret' => '',
-            'shop_id' => '',
+            'shopId' => '',
         ],
     ],
 ];

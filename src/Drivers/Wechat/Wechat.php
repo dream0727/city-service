@@ -4,10 +4,7 @@ namespace CityService\Drivers\Wechat;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
-use CityService\Drivers\Wechat\Response\WechatAddOrderResponse;
-use CityService\Drivers\Wechat\Response\WechatDeliveryResponse;
-use CityService\Drivers\Wechat\Response\WechatMockResponse;
-use CityService\Drivers\Wechat\Response\WechatPreAddOrderResponse;
+use CityService\Drivers\Wechat\Response\WechatResponse;
 use CityService\Exceptions\CityServiceException;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
@@ -32,7 +29,7 @@ class Wechat extends AbstractCityService implements CityServiceInterface
 
         $result = $this->post($path);
 
-        return new WechatDeliveryResponse(json_decode($result, true));
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -48,10 +45,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function preAddOrder(array $data = []): ResponseInterface
     {
         $path = '/order/pre_add';
+
         $params = $this->getParams($data);
+
         $result = $this->post($path, $params);
 
-        return new WechatPreAddOrderResponse(json_decode($result, true));
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -67,10 +66,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function addOrder(array $data = []): ResponseInterface
     {
         $path = '/order/add';
+
         $params = $this->getParams($data);
+
         $result = $this->post($path, $params);
 
-        return new WechatAddOrderResponse(json_decode($result, true));
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -87,9 +88,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function reOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/order/readd';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -105,9 +109,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function addTip(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+        
         $path = '/order/addtips';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -123,9 +130,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function preCancelOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/order/precancel';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -141,9 +151,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function cancelOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/order/cancel';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -159,9 +172,12 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function abnormalConfirm(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/order/confirm_return';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -177,13 +193,16 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     public function getOrder(array $data = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/order/get';
 
-        return $this->post($path, $params);
+        $result = $this->post($path, $params);
+
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
-     * 拉取配送单信息
+     * 模拟配送
      *
      * @param array $data
      *
@@ -192,14 +211,15 @@ class Wechat extends AbstractCityService implements CityServiceInterface
      * @throws HttpException
      * @throws \luweiss\Wechat\WechatException
      */
-    public function mockUpdateOrder(array $data = []): ResponseInterface
+    public function mockUpdateOrder(array $data = [], array $params = []): ResponseInterface
     {
         $params = $this->getParams($data);
+
         $path = '/test_update_order';
 
         $result = $this->post($path, $params);
 
-        return new WechatMockResponse(json_decode($result, true));
+        return new WechatResponse(json_decode($result, true));
     }
 
     /**
@@ -215,17 +235,20 @@ class Wechat extends AbstractCityService implements CityServiceInterface
     private function post($path, array $data = [])
     {
         try {
+
             $client = new Client([
                 'timeout' => 30,
             ]);
-            $url = substr($path, 0, 1) !== '/' ? self::BASE_URI . '/' . $path : self::BASE_URI . $path;
-            $body = $client->post($url, [
+
+            $url = self::BASE_URI . $path;
+
+            return $client->post($url, [
                 'query' => [
                     'access_token' => $this->getAccessToken(),
                 ],
                 'body' => json_encode($data, JSON_UNESCAPED_UNICODE),
             ])->getBody();
-            return $body;
+
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }

@@ -4,8 +4,7 @@ namespace CityService\Drivers\Ss;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
-use CityService\Drivers\Ss\Response\SsAddOrderResponse;
-use CityService\Drivers\Ss\Response\SsPreAddOrderResponse;
+use CityService\Drivers\Ss\Response\SsResponse;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
 use GuzzleHttp\Client;
@@ -28,37 +27,6 @@ class Ss extends AbstractCityService implements CityServiceInterface
         // TODO: Implement getAllImmeDelivery() method.
     }
 
-
-    /**
-     * 腾讯地图---->百度地图
-     * @param double $lat 纬度
-     * @param double $lng 经度
-     */
-    private function Convert_GCJ02_To_BD09($lat,$lng){
-        $x_pi = 3.14159265358979324 * 3000.0 / 180.0;
-        $x = $lng;
-        $y = $lat;
-        $z = sqrt($x * $x + $y * $y) + 0.00002 * sin($y * $x_pi);
-        $theta = atan2($y, $x) + 0.000003 * cos($x * $x_pi);
-        $lng = $z * cos($theta) + 0.0065;
-        $lat = $z * sin($theta) + 0.006;
-        return array('lng'=>$lng,'lat'=>$lat);
-    }
-
-    /**
-     * 转换腾讯地图坐标为百度坐标
-     * @param $data
-     */
-    private function dealPos(&$data)
-    {
-        $receiverPos = $this->Convert_GCJ02_To_BD09($data['receiver']['lat'], $data['receiver']['lng']);
-        $data['receiver']['lat'] = $receiverPos['lat'];
-        $data['receiver']['lng'] = $receiverPos['lng'];
-        $senderPos = $this->Convert_GCJ02_To_BD09($data['sender']['lat'], $data['sender']['lng']);
-        $data['sender']['lat'] = $senderPos['lat'];
-        $data['sender']['lng'] = $senderPos['lng'];
-    }
-
     /**
      * 预创建订单
      * http://open.ishansong.com/documentCenter
@@ -69,51 +37,11 @@ class Ss extends AbstractCityService implements CityServiceInterface
      */
     public function preAddOrder(array $data = []): \CityService\ResponseInterface
     {
-        $this->dealPos($data);
         $path = 'orderCalculate';
-        $receiver = [
-            "orderNo" => $data['shop_order_id'],
-            "toAddress" => $data['receiver']['address'] ?? '',
-            "toAddressDetail" => $data['receiver']['address_detail'],
-            "toLatitude" => $data['receiver']['lat'],
-            "toLongitude" => $data['receiver']['lng'],
-            "toReceiverName" => $data['receiver']['name'],
-            "toMobile" => $data['receiver']['phone'],
-            "goodType" => 10,
-            "weight" => $data['cargo']['goods_weight'],
-        ];
-        $json = [
-            "cityName" => $data['sender']['city'],
-            "sender" => [
-                "fromAddress" => $data['sender']['address'],
-                "fromAddressDetail" => $data['sender']['address_detail'],
-                "fromSenderName" => $data['sender']['name'],
-                "fromMobile" => $data['sender']['phone'],
-                "fromLatitude" => $data['sender']['lat'],
-                "fromLongitude" => $data['sender']['lng'],
-            ],
-            "receiverList" => [
-                $receiver,
-            ],
-            "appointType" => 0,
-        ];
 
-        //返回当前的毫秒时间戳
-        function getMillisecond()
-        {
-            list($t1, $t2) = explode(' ', microtime());
-            return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
-        }
+        $result = $this->post($path, $data);
 
-        $default = [
-            'clientId' => $this->getConfig('client_id'),
-            'shopId' => $this->getConfig('shop_id'),
-            'timestamp' => getMillisecond(),
-            'data' => json_encode($json),
-        ];
-
-        $result = $this->post($path, $default);
-        return new SsPreAddOrderResponse(json_decode($result, true));
+        return new SsResponse(json_decode($result, true));
     }
 
     /**
@@ -128,26 +56,9 @@ class Ss extends AbstractCityService implements CityServiceInterface
     {
         $path = 'orderPlace';
 
-        $json = [
-            "issOrderNo" => $data['delivery_no'],
-        ];
+        $result = $this->post($path, $data);
 
-        //返回当前的毫秒时间戳
-        function getMillisecond()
-        {
-            list($t1, $t2) = explode(' ', microtime());
-            return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
-        }
-
-        $default = [
-            'clientId' => $this->getConfig('client_id'),
-            'shopId' => $this->getConfig('shop_id'),
-            'timestamp' => getMillisecond(),
-            'data' => json_encode($json),
-        ];
-
-        $result = $this->post($path, $default);
-        return new SsAddOrderResponse(json_decode($result, true));
+        return new SsResponse(json_decode($result, true));
     }
 
     public function reOrder(array $data = []): \CityService\ResponseInterface
@@ -180,7 +91,7 @@ class Ss extends AbstractCityService implements CityServiceInterface
         // TODO: Implement getOrder() method.
     }
 
-    public function mockUpdateOrder(array $data = []): \CityService\ResponseInterface
+    public function mockUpdateOrder(array $data = [], array $params = []): \CityService\ResponseInterface
     {
         // TODO: Implement mockUpdateOrder() method.
     }
@@ -208,32 +119,32 @@ class Ss extends AbstractCityService implements CityServiceInterface
     private function post($path, array $data = [])
     {
         try {
+
+            $data['clientId'] = $this->getConfig('clientId');
+            $data['shopId'] = $this->getConfig('shopId');
+            $data['timestamp'] = $this->getMillisecond();
             $data['sign'] = $this->makeSign($data);
-            $client = new Client(
-                [
-                    'verify' => false,
-                    'timeout' => 30,
-                ]
-            );
-            try {
-                $debug = $this->getConfig('debug');
-            } catch (\Exception $e) {
-                $debug = false;
-            }
-            if ($debug) {
-                $url = self::BASE_URI_DEBUG . '/' . $path;
-            } else {
-                $url = self::BASE_URI . '/' . $path;
-            }
-            $body = $client->post(
-                $url,
-                [
-                    'form_params' => $data,
-                ]
-            )->getBody();
-            return $body;
+
+            $client = new Client([
+                'verify' => false,
+                'timeout' => 30,
+            ]);
+
+            $baseUrl = $this->getConfig('debug') ? self::BASE_URI_DEBUG : self::BASE_URI;
+            $url = $baseUrl . '/' . $path;
+
+            return $client->post($url, [
+                'form_params' => $data,
+            ])->getBody();
+
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }
+    }
+
+    private function getMillisecond()
+    {
+        list($t1, $t2) = explode(' ', microtime());
+        return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
     }
 }

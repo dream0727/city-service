@@ -31,5 +31,5 @@ interface CityServiceInterface
     public function getOrder(array $data = []):ResponseInterface;
 
     // 模拟配送公司更新配送订单状态
-    public function mockUpdateOrder(array $data = []):ResponseInterface;
+    public function mockUpdateOrder(array $data = [], array $params = []):ResponseInterface;
 }

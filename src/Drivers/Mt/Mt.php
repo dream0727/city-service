@@ -4,8 +4,8 @@ namespace CityService\Drivers\Mt;
 
 use CityService\AbstractCityService;
 use CityService\CityServiceInterface;
-use CityService\Drivers\Mt\Response\MtAddOrderResponse;
-use CityService\Drivers\Mt\Response\MtPreAddOrderResponse;
+use CityService\Drivers\Mt\Exceptions\MtException;
+use CityService\Drivers\Mt\Response\MtResponse;
 use CityService\Exceptions\HttpException;
 use CityService\ResponseInterface;
 use GuzzleHttp\Client;
@@ -31,35 +31,9 @@ class Mt extends AbstractCityService implements CityServiceInterface
     {
         $path = '/order/createByShop';
 
-        $goodsDetail = [];
-        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
-            $goodsDetail['goods'][] = [
-                'goodName' => $item['good_name'],
-                'goodPrice' => $item['good_price'],
-                'goodCount' => (int) $item['good_count'],
-                'goodUnit' => $item['good_unit'],
-            ];
-        }
+        $result = $this->post($path, $data);
 
-        $default = [
-            'delivery_id' => $data['delivery_id'],
-            'order_id' => $data['shop_order_id'],
-            'outer_order_source_desc' => $data['outer_order_source_desc'],
-            'shop_id' => $this->getConfig('shop_id'),
-            'delivery_service_code' => $data['delivery_service_code'],
-            'receiver_name' => $data['receiver']['name'],
-            'receiver_address' => $data['receiver']['address'] . $data['receiver']['address_detail'],
-            'receiver_phone' => $data['receiver']['phone'],
-            'receiver_lng' => $data['receiver']['lng'] * pow(10, 6),
-            'receiver_lat' => $data['receiver']['lat'] * pow(10, 6),
-            'goods_value' => $data['cargo']['goods_value'],
-            'goods_weight' => $data['cargo']['goods_weight'],
-            'goods_detail' => json_encode($goodsDetail, JSON_UNESCAPED_UNICODE),
-        ];
-
-        $result = $this->post($path, $default);
-
-        return new MtPreAddOrderResponse(json_decode($result, true));
+        return new MtResponse(json_decode($result, true));
     }
 
     /**
@@ -73,34 +47,10 @@ class Mt extends AbstractCityService implements CityServiceInterface
     public function addOrder(array $data = []): \CityService\ResponseInterface
     {
         $path = '/order/createByShop';
-        $goodsDetail = [];
-        foreach ($data['cargo']['goods_detail']['goods'] as $key => $item) {
-            $goodsDetail['goods'][] = [
-                'goodName' => $item['good_name'],
-                'goodPrice' => $item['good_price'],
-                'goodCount' => (int) $item['good_count'],
-                'goodUnit' => $item['good_unit'],
-            ];
-        }
 
-        $default = [
-            'delivery_id' => $data['delivery_id'],
-            'order_id' => $data['shop_order_id'],
-            'outer_order_source_desc' => $data['outer_order_source_desc'],
-            'shop_id' => $this->getConfig('shop_id'),
-            'delivery_service_code' => $data['delivery_service_code'],
-            'receiver_name' => $data['receiver']['name'],
-            'receiver_address' => $data['receiver']['address'] . $data['receiver']['address_detail'],
-            'receiver_phone' => $data['receiver']['phone'],
-            'receiver_lng' => $data['receiver']['lng'] * pow(10, 6),
-            'receiver_lat' => $data['receiver']['lat'] * pow(10, 6),
-            'goods_value' => $data['cargo']['goods_value'],
-            'goods_weight' => $data['cargo']['goods_weight'],
-            'goods_detail' => json_encode($goodsDetail, JSON_UNESCAPED_UNICODE),
-        ];
-        
-        $result = $this->post($path, $default);
-        return new MtAddOrderResponse(json_decode($result, true));
+        $result = $this->post($path, $data);
+
+        return new MtResponse(json_decode($result, true));
     }
 
     public function reOrder(array $data = []): \CityService\ResponseInterface
@@ -120,7 +70,11 @@ class Mt extends AbstractCityService implements CityServiceInterface
 
     public function cancelOrder(array $data = []): \CityService\ResponseInterface
     {
-        // TODO: Implement cancelOrder() method.
+        $path = '/order/delete';
+
+        $result = $this->post($path, $data);
+
+        return new MtResponse(json_decode($result, true));
     }
 
     public function abnormalConfirm(array $data = []): \CityService\ResponseInterface
@@ -133,11 +87,56 @@ class Mt extends AbstractCityService implements CityServiceInterface
         // TODO: Implement getOrder() method.
     }
 
-    public function mockUpdateOrder(array $data = []): \CityService\ResponseInterface
+    /**
+     * 模拟配送测试
+     * https://peisong.meituan.com/open/doc#section3-2
+     * @param  [type] $mockType [description]
+     * @param  array  $data     [description]
+     * @return [type]           [description]
+     */
+    public function mockUpdateOrder(array $data = [], array $params = []): \CityService\ResponseInterface
     {
-        // TODO: Implement mockUpdateOrder() method.
+        if (!isset($params['mock_type'])) {
+            throw new MtException('mock_type异常');
+        }
+
+        switch ($params['mock_type']) {
+            // 模拟接单
+            case 'arrange':
+                $path = '/test/order/arrange';
+                break;
+            // 模拟取货
+            case 'pickup':
+                $path = '/test/order/pickup';
+                break;
+            // 模拟送达
+            case 'deliver':
+                $path = '/test/order/deliver';
+                break;
+            // 模拟改派
+            case 'rearrange':
+                $path = '/test/order/rearrange';
+                break;
+            // 模拟上传异常
+            case 'reportException':
+                $path = '/test/order/reportException';
+                break;
+            default:
+                throw new MtException('未知模拟类型');
+                break;
+        }
+
+        $result = $this->post($path, $data);
+
+        return new MtResponse(json_decode($result, true));
     }
 
+    /**
+     * 签名验证
+     * https://peisong.meituan.com/open/doc#section1-3
+     * @param  [type] $data [description]
+     * @return [type]       [description]
+     */
     private function makeSign($data)
     {
         ksort($data);
@@ -155,33 +154,36 @@ class Mt extends AbstractCityService implements CityServiceInterface
         return $sign;
     }
 
+    /**
+     * https://peisong.meituan.com/open/doc#section1-1
+     * @param  [type] $path [description]
+     * @param  array  $data [description]
+     * @return [type]       [description]
+     */
     private function post($path, array $data = [])
     {
         try {
             // 系统参数
             $data['appkey'] = $this->getConfig('appKey');
+            $data['shop_id'] = $this->getConfig('shopId');
             $data['timestamp'] = time();
             $data['version'] = '1.0';
             $data['sign'] = $this->makeSign($data);
 
-            $client = new Client(
-                [
-                    'verify' => false,
-                    'timeout' => 30,
-                ]
-            );
+            $client = new Client([
+                'verify' => false,
+                'timeout' => 30,
+            ]);
 
-            $url = self::BASE_URI . '/' . $path;
-            $body = $client->post(
-                $url,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                    ],
-                    'query' => $data,
-                ]
-            )->getBody();
-            return $body;
+            $url = self::BASE_URI . $path;
+
+            return $client->post($url, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => $data,
+            ])->getBody();
+
         } catch (GuzzleException $e) {
             throw new HttpException($e->getMessage());
         }

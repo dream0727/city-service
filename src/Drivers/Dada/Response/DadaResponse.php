@@ -4,7 +4,7 @@ namespace CityService\Drivers\Dada\Response;
 
 use CityService\ResponseInterface;
 
-class MockResponse implements ResponseInterface
+class DadaResponse implements ResponseInterface
 {
     private $result;
 
@@ -16,11 +16,6 @@ class MockResponse implements ResponseInterface
     public function getCode()
     {
         return $this->result['code'];
-    }
-
-    public function getData()
-    {
-        return $this->result;
     }
 
     public function getOriginalData()

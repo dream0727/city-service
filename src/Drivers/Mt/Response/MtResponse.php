@@ -1,12 +1,12 @@
 <?php
 
-namespace CityService\Drivers\Wechat\Response;
+namespace CityService\Drivers\Mt\Response;
 
 use CityService\ResponseInterface;
 
-class WechatDeliveryResponse implements ResponseInterface
+class MtResponse implements ResponseInterface
 {
-    private $result;
+    protected $result;
 
     public function __construct(array $result = [])
     {
@@ -15,12 +15,7 @@ class WechatDeliveryResponse implements ResponseInterface
 
     public function getCode()
     {
-        return isset($this->result['errcode']) ? $this->result['errcode'] : $this->result['resultcode'];
-    }
-    
-    public function getData()
-    {
-        return $this->result['list'];
+        return $this->result['code'];
     }
 
     public function getOriginalData()
@@ -35,6 +30,6 @@ class WechatDeliveryResponse implements ResponseInterface
 
     public function getMessage():  ? string
     {
-        return isset($this->result['errmsg']) ? $this->result['errmsg'] : $this->result['resultmsg'];
+        return $this->result['message'];
     }
 }
